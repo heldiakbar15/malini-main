@@ -1,69 +1,382 @@
-# CodeIgniter 4 Application Starter
+Berikut **README.md** yang bisa langsung kamu copy ke file `README.md` di root project GitHub kamu.
 
-## What is CodeIgniter?
+````markdown
+# Malini Parfum
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+Malini Parfum adalah aplikasi sistem penjualan parfum berbasis web yang dibuat menggunakan **CodeIgniter 4**. Aplikasi ini memiliki fitur katalog produk, detail produk, varian ukuran parfum, keranjang belanja, checkout, transaksi customer, serta panel admin untuk mengelola transaksi.
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+## Fitur Aplikasi
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+### Customer
+- Melihat daftar produk parfum
+- Melihat detail produk
+- Memilih varian ukuran parfum
+  - 10 ml
+  - 30 ml
+  - 50 ml
+- Register akun
+- Login akun
+- Menambahkan produk ke keranjang
+- Mengubah jumlah produk di keranjang
+- Menghapus produk dari keranjang
+- Checkout pesanan
+- Melihat riwayat transaksi
+- Melihat detail transaksi
+- Logout
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+### Admin
+- Login admin
+- Masuk ke dashboard admin
+- Melihat daftar transaksi customer
+- Melihat detail transaksi
+- Mengubah status pembayaran
+- Mengubah status pesanan
+- Logout
 
-## Installation & updates
+## Teknologi yang Digunakan
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+- PHP
+- CodeIgniter 4
+- MySQL
+- HTML
+- CSS
+- Laragon / XAMPP
+- Composer
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+## Requirement
 
-## Setup
+Pastikan laptop sudah terinstall:
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+- PHP versi 8.1 atau lebih baru
+- Composer
+- MySQL
+- Laragon / XAMPP
+- Git
 
-## Important Change with index.php
+## Cara Install Project
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+### 1. Clone Repository
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+```bash
+git clone https://github.com/heldiakbar15/malini-main.git
+````
 
-**Please** read the user guide for a better explanation of how CI4 works!
+Masuk ke folder project:
 
-## Repository Management
+```bash
+cd malini-main
+```
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+### 2. Install Dependency Composer
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+Jalankan perintah:
 
-## Server Requirements
+```bash
+composer install
+```
 
-PHP version 8.2 or higher is required, with the following extensions installed:
+### 3. Buat File `.env`
 
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
+Copy file `env` menjadi `.env`.
 
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - The end of life date for PHP 8.1 was December 31, 2025.
-> - If you are still using below PHP 8.2, you should upgrade immediately.
-> - The end of life date for PHP 8.2 will be December 31, 2026.
+Jika menggunakan terminal:
 
-Additionally, make sure that the following extensions are enabled in your PHP:
+```bash
+copy env .env
+```
 
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+Atau buat manual file baru bernama:
+
+```text
+.env
+```
+
+Lalu isi konfigurasi berikut:
+
+```env
+CI_ENVIRONMENT = development
+
+database.default.hostname = localhost
+database.default.database = db_malini_parfum
+database.default.username = root
+database.default.password =
+database.default.DBDriver = MySQLi
+database.default.DBPrefix =
+database.default.port = 3306
+```
+
+Jika menggunakan Laragon, biasanya:
+
+```text
+username: root
+password: 
+```
+
+Jika menggunakan XAMPP, biasanya juga:
+
+```text
+username: root
+password: 
+```
+
+## 4. Buat Database
+
+Buka phpMyAdmin atau HeidiSQL, lalu buat database baru:
+
+```sql
+CREATE DATABASE db_malini_parfum;
+```
+
+## 5. Jalankan Migration
+
+Jalankan perintah:
+
+```bash
+php spark migrate
+```
+
+Perintah ini akan membuat tabel database yang dibutuhkan aplikasi.
+
+## 6. Jalankan Seeder User
+
+Untuk membuat akun admin dan customer demo, jalankan:
+
+```bash
+php spark db:seed UserSeeder
+```
+
+Akun default:
+
+### Admin
+
+```text
+Email    : admin@gmail.com
+Password : admin123
+```
+
+### Customer
+
+```text
+Email    : farhan@gmail.com
+Password : farhan123
+```
+
+## 7. Tambahkan Data Produk Awal
+
+Jika data produk belum tersedia, jalankan SQL berikut di phpMyAdmin:
+
+```sql
+INSERT INTO categories (name, created_at, updated_at)
+VALUES 
+('Parfum Pria', NOW(), NOW()),
+('Parfum Wanita', NOW(), NOW()),
+('Parfum Unisex', NOW(), NOW());
+
+INSERT INTO products (category_id, name, description, image, created_at, updated_at)
+VALUES
+(1, 'Dior Sauvage', 'Parfum pria dengan aroma maskulin, segar, dan elegan.', 'dior.png', NOW(), NOW()),
+(1, 'Creed Aventus', 'Parfum pria premium dengan karakter aroma kuat dan mewah.', 'creed.png', NOW(), NOW()),
+(2, 'Black Opium', 'Parfum wanita dengan aroma manis, elegan, dan modern.', 'black-opium.png', NOW(), NOW()),
+(3, 'Baccarat Rouge', 'Parfum unisex yang mewah, elegan, dan cocok digunakan untuk acara spesial.', 'baccarat.png', NOW(), NOW());
+
+INSERT INTO product_variants (product_id, size, price, stock, created_at, updated_at)
+VALUES
+(1, '10 ml', 50000, 20, NOW(), NOW()),
+(1, '30 ml', 120000, 15, NOW(), NOW()),
+(1, '50 ml', 180000, 10, NOW(), NOW()),
+
+(2, '10 ml', 55000, 20, NOW(), NOW()),
+(2, '30 ml', 130000, 15, NOW(), NOW()),
+(2, '50 ml', 200000, 10, NOW(), NOW()),
+
+(3, '10 ml', 45000, 20, NOW(), NOW()),
+(3, '30 ml', 110000, 15, NOW(), NOW()),
+(3, '50 ml', 165000, 10, NOW(), NOW()),
+
+(4, '10 ml', 55000, 30, NOW(), NOW()),
+(4, '30 ml', 130000, 20, NOW(), NOW()),
+(4, '50 ml', 200000, 10, NOW(), NOW());
+```
+
+## 8. Jalankan Project
+
+Jalankan server CodeIgniter:
+
+```bash
+php spark serve
+```
+
+Lalu buka di browser:
+
+```text
+http://localhost:8080
+```
+
+Jika port 8080 sudah digunakan, jalankan dengan port lain:
+
+```bash
+php spark serve --port 8081
+```
+
+Lalu buka:
+
+```text
+http://localhost:8081
+```
+
+## Struktur Folder Penting
+
+```text
+app/
+├── Controllers/
+│   ├── AuthController.php
+│   ├── HomeController.php
+│   ├── CartController.php
+│   ├── CheckoutController.php
+│   ├── AdminTransactionController.php
+│   └── CustomerTransactionController.php
+│
+├── Models/
+│   ├── UserModel.php
+│   ├── ProductModel.php
+│   ├── ProductVariantModel.php
+│   ├── TransactionModel.php
+│   └── TransactionDetailModel.php
+│
+├── Views/
+│   ├── auth/
+│   ├── home/
+│   ├── cart/
+│   ├── checkout/
+│   ├── dashboard/
+│   ├── admin/
+│   └── customer/
+│
+public/
+└── assets/
+    ├── css/
+    │   └── style.css
+    └── img/
+        ├── auth-bg.png
+        ├── dior.png
+        ├── creed.png
+        ├── black-opium.png
+        └── baccarat.png
+```
+
+## Alur Sistem
+
+### Customer
+
+```text
+Register / Login
+        ↓
+Melihat Produk
+        ↓
+Melihat Detail Produk
+        ↓
+Memilih Varian Ukuran
+        ↓
+Tambah ke Keranjang
+        ↓
+Edit / Hapus Keranjang
+        ↓
+Checkout
+        ↓
+Riwayat Transaksi
+```
+
+### Admin
+
+```text
+Login Admin
+        ↓
+Dashboard Admin
+        ↓
+Kelola Transaksi
+        ↓
+Lihat Detail Transaksi
+        ↓
+Update Status Pembayaran
+        ↓
+Update Status Pesanan
+```
+
+## Status Pembayaran
+
+Status pembayaran yang digunakan:
+
+```text
+pending
+paid
+failed
+```
+
+## Status Pesanan
+
+Status pesanan yang digunakan:
+
+```text
+pending
+processing
+shipped
+completed
+cancelled
+```
+
+## Catatan Penting
+
+Jika muncul error database seperti:
+
+```text
+Unable to connect to the database
+```
+
+Pastikan konfigurasi `.env` sudah benar dan database sudah dibuat.
+
+Jika muncul error view seperti:
+
+```text
+Invalid file
+```
+
+Pastikan file view berada di folder yang benar, misalnya:
+
+```text
+app/Views/customer/transactions/index.php
+```
+
+Jika gambar tidak muncul, pastikan file gambar ada di:
+
+```text
+public/assets/img/
+```
+
+Dan nama gambar di database sesuai dengan nama file, contoh:
+
+```text
+dior.png
+creed.png
+black-opium.png
+baccarat.png
+```
+
+## Developer
+
+Project ini dibuat untuk kebutuhan pengembangan sistem penjualan parfum berbasis web pada Toko Malini Parfum.
+
+```text
+Nama Project : Malini Parfum
+Framework    : CodeIgniter 4
+Database     : MySQL
+```
+
+````
+
+Saran tambahan: setelah README ini dibuat, push ke GitHub dengan perintah:
+
+```bash
+git add README.md
+git commit -m "Add README installation guide"
+git push
+````
