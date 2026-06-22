@@ -11,16 +11,43 @@
     <div class="container navbar-inner">
         <a href="/admin/dashboard" class="logo">MALINI ADMIN</a>
         <div class="nav-menu">
-            <a href="/admin/transactions">Transaksi</a>
             <a href="/admin/dashboard">Dashboard</a>
-            <a href="/logout" class="btn">Logout</a>
+            <a href="/admin/categories">Kategori</a>
+            <a href="/admin/products">Produk</a>
+            <a href="/admin/transactions">Transaksi</a>
+            <a href="/admin/reports">Laporan</a>
+            <details class="profile-menu">
+                <summary class="nav-icon-button" aria-label="Profil">
+                    <span class="nav-icon" aria-hidden="true">&#128100;</span>
+                </summary>
+                <div class="profile-panel">
+                    <div class="profile-head">
+                        <div class="profile-avatar"><?= esc(strtoupper(substr(session()->get('name'), 0, 1))) ?></div>
+                        <div>
+                            <strong><?= esc(session()->get('name')) ?></strong>
+                            <span><?= esc(session()->get('email')) ?></span>
+                        </div>
+                    </div>
+                    <div class="profile-meta">
+                        <span>Role</span>
+                        <strong>Administrator</strong>
+                    </div>
+                    <a href="/logout" class="profile-logout">Logout</a>
+                </div>
+            </details>
         </div>
     </div>
 </nav>
 
 <section class="section">
     <div class="container">
-        <div class="eyebrow">Admin Panel</div>
+        <div class="admin-breadcrumb">
+            <a href="/admin/dashboard">Dashboard</a>
+            <span>/</span>
+            <a href="/admin/transactions">TRANSAKSI</a>
+            <span>/</span>
+            <strong>DETAIL</strong>
+        </div>
         <h1 class="section-title">Detail Transaksi</h1>
         <div class="line"></div>
 

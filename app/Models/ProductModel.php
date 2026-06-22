@@ -12,8 +12,6 @@ class ProductModel extends Model
         'category_id',
         'name',
         'description',
-        'price',
-        'stock',
         'image'
     ];
     protected $useTimestamps = true;

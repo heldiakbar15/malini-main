@@ -32,6 +32,25 @@ $routes->get('/admin/transactions', 'AdminTransactionController::index');
 $routes->get('/admin/transactions/detail/(:num)', 'AdminTransactionController::detail/$1');
 $routes->post('/admin/transactions/update-status/(:num)', 'AdminTransactionController::updateStatus/$1');
 
+// Admin master data
+$routes->get('/admin/categories', 'AdminCategoryController::index');
+$routes->get('/admin/categories/create', 'AdminCategoryController::create');
+$routes->post('/admin/categories/store', 'AdminCategoryController::store');
+$routes->get('/admin/categories/edit/(:num)', 'AdminCategoryController::edit/$1');
+$routes->post('/admin/categories/update/(:num)', 'AdminCategoryController::update/$1');
+$routes->post('/admin/categories/delete/(:num)', 'AdminCategoryController::delete/$1');
+
+$routes->get('/admin/products', 'AdminProductController::index');
+$routes->get('/admin/products/create', 'AdminProductController::create');
+$routes->post('/admin/products/store', 'AdminProductController::store');
+$routes->get('/admin/products/edit/(:num)', 'AdminProductController::edit/$1');
+$routes->post('/admin/products/update/(:num)', 'AdminProductController::update/$1');
+$routes->post('/admin/products/delete/(:num)', 'AdminProductController::delete/$1');
+
+$routes->get('/admin/reports', 'AdminReportController::index');
+$routes->get('/admin/reports/export-excel', 'AdminReportController::exportExcel');
+$routes->get('/admin/reports/export-pdf', 'AdminReportController::exportPdf');
+
 // Customer transaksi
 $routes->get('/transactions', 'CustomerTransactionController::index');
 $routes->get('/transactions/detail/(:num)', 'CustomerTransactionController::detail/$1');

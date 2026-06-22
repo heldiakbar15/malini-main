@@ -23,7 +23,25 @@
             <?php if (session()->get('logged_in')) : ?>
                 <a href="/cart">Keranjang</a>
                 <a href="/dashboard">Dashboard</a>
-                <a href="/logout" class="btn">Logout</a>
+                <details class="profile-menu">
+                    <summary class="nav-icon-button" aria-label="Profil">
+                        <span class="nav-icon" aria-hidden="true">&#128100;</span>
+                    </summary>
+                    <div class="profile-panel">
+                        <div class="profile-head">
+                            <div class="profile-avatar"><?= esc(strtoupper(substr(session()->get('name'), 0, 1))) ?></div>
+                            <div>
+                                <strong><?= esc(session()->get('name')) ?></strong>
+                                <span><?= esc(session()->get('email')) ?></span>
+                            </div>
+                        </div>
+                        <div class="profile-meta">
+                            <span>Role</span>
+                            <strong><?= session()->get('role') === 'admin' ? 'Administrator' : 'Customer' ?></strong>
+                        </div>
+                        <a href="/logout" class="profile-logout">Logout</a>
+                    </div>
+                </details>
             <?php else : ?>
                 <a href="/login">Masuk</a>
                 <a href="/register" class="btn">Daftar</a>

@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kelola Transaksi - Admin Malini Parfum</title>
+    <title>Kelola Kategori - Admin Malini Parfum</title>
     <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
@@ -41,13 +41,17 @@
 
 <section class="section">
     <div class="container">
-        <div class="admin-breadcrumb">
-            <a href="/admin/dashboard">Dashboard</a>
-            <span>/</span>
-            <strong>TRANSAKSI</strong>
+        <div class="admin-page-head">
+            <div>
+                <div class="admin-breadcrumb">
+                    <a href="/admin/dashboard">Dashboard</a>
+                    <span>/</span>
+                    <strong>KATEGORI</strong>
+                </div>
+                <h1 class="section-title">Kelola Kategori</h1>
+            </div>
+            <a href="/admin/categories/create" class="btn">Tambah Kategori</a>
         </div>
-        <h1 class="section-title">Kelola Transaksi</h1>
-        <div class="line"></div>
 
         <?php if (session()->getFlashdata('success')) : ?>
             <div class="alert-success"><?= session()->getFlashdata('success') ?></div>
@@ -58,46 +62,37 @@
         <?php endif; ?>
 
         <div class="table-card">
-            <?php if (!empty($transactions)) : ?>
+            <?php if (!empty($categories)) : ?>
                 <table class="table">
                     <thead>
                         <tr>
                             <th>No</th>
-                            <th>Invoice</th>
-                            <th>Customer</th>
-                            <th>Total</th>
-                            <th>Metode</th>
-                            <th>Status Bayar</th>
-                            <th>Status Pesanan</th>
-                            <th>Tanggal</th>
+                            <th>Nama Kategori</th>
+                            <th>Tanggal Dibuat</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $no = 1; foreach ($transactions as $transaction) : ?>
+                        <?php $no = 1; foreach ($categories as $category) : ?>
                             <tr>
                                 <td><?= $no++ ?></td>
-                                <td><strong><?= esc($transaction['invoice_number']) ?></strong></td>
+                                <td><strong><?= esc($category['name']) ?></strong></td>
+                                <td><?= esc($category['created_at'] ?? '-') ?></td>
                                 <td>
-                                    <?= esc($transaction['customer_name']) ?><br>
-                                    <small><?= esc($transaction['user_email']) ?></small>
-                                </td>
-                                <td>Rp <?= number_format($transaction['total_amount'], 0, ',', '.') ?></td>
-                                <td><?= esc($transaction['payment_method']) ?></td>
-                                <td><?= esc($transaction['payment_status']) ?></td>
-                                <td><?= esc($transaction['order_status']) ?></td>
-                                <td><?= esc($transaction['created_at']) ?></td>
-                                <td>
-                                    <a class="btn" href="/admin/transactions/detail/<?= esc($transaction['id']) ?>">
-                                        Detail
-                                    </a>
+                                    <div class="table-actions">
+                                        <a href="/admin/categories/edit/<?= esc($category['id']) ?>" class="btn btn-outline">Edit</a>
+                                        <form action="/admin/categories/delete/<?= esc($category['id']) ?>" method="post" onsubmit="return confirm('Hapus kategori ini? Produk terkait akan menjadi tanpa kategori.');">
+                                            <?= csrf_field() ?>
+                                            <button type="submit" class="btn btn-danger">Hapus</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
             <?php else : ?>
-                <p>Belum ada transaksi.</p>
+                <p class="empty-text">Belum ada kategori.</p>
             <?php endif; ?>
         </div>
     </div>
