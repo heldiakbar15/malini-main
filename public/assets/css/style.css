@@ -1455,6 +1455,102 @@ small {
     margin-top: 22px;
 }
 
+.checkout-payment-method {
+    margin-bottom: 26px;
+}
+
+.checkout-payment-method .input[readonly] {
+    background: #f8f5ef;
+    color: #5f5447;
+    font-weight: 700;
+}
+
+.checkout-actions {
+    display: grid;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.payment-card {
+    width: min(800px, 100%);
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow-soft);
+}
+
+.payment-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.payment-card-head span,
+.payment-total-box span,
+.payment-info-row span {
+    display: block;
+    color: #777777;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+.payment-card-head strong {
+    display: block;
+    margin-top: 7px;
+    font-size: 20px;
+}
+
+.payment-total-box {
+    margin: 22px 0;
+    padding: 22px;
+    border: 1px solid #f0d99b;
+    border-radius: 14px;
+    background: #fff8e8;
+}
+
+.payment-total-box strong {
+    display: block;
+    margin-top: 8px;
+    font-size: 30px;
+    line-height: 1.2;
+}
+
+.payment-info-list {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.payment-info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.payment-info-row strong {
+    text-align: right;
+}
+
+.payment-actions {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.payment-actions-inline {
+    display: flex;
+    flex-wrap: wrap;
+}
+
 .admin-product-cell {
     display: flex;
     align-items: center;
@@ -1670,6 +1766,24 @@ small {
 @media (max-width: 600px) {
     .admin-summary-grid {
         grid-template-columns: 1fr;
+    }
+
+    .payment-card {
+        padding: 22px;
+    }
+
+    .payment-card-head,
+    .payment-info-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .payment-info-row strong {
+        text-align: left;
+    }
+
+    .payment-total-box strong {
+        font-size: 24px;
     }
 
     .sales-chart {

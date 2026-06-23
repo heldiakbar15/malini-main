@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Models\ProductVariantModel;
 use App\Models\TransactionModel;
 use App\Models\TransactionDetailModel;
+use Midtrans\Config;
+use Midtrans\Snap;
 
 class CheckoutController extends BaseController
 {
@@ -45,19 +47,19 @@ class CheckoutController extends BaseController
             return redirect()->to('/cart')->with('error', 'Keranjang masih kosong.');
         }
 
-        $customerName    = $this->request->getPost('customer_name');
-        $customerPhone   = $this->request->getPost('customer_phone');
-        $shippingAddress = $this->request->getPost('shipping_address');
-        $paymentMethod   = $this->request->getPost('payment_method');
+        $customerName    = trim((string) $this->request->getPost('customer_name'));
+        $customerPhone   = trim((string) $this->request->getPost('customer_phone'));
+        $shippingAddress = trim((string) $this->request->getPost('shipping_address'));
+        $paymentMethod   = 'Midtrans';
 
-        if (!$customerName || !$shippingAddress || !$paymentMethod) {
-            return redirect()->back()->with('error', 'Nama, alamat, dan metode pembayaran wajib diisi.');
+        if (!$customerName || !$shippingAddress) {
+            return redirect()->back()->with('error', 'Nama dan alamat pengiriman wajib diisi.');
         }
 
         $db = \Config\Database::connect();
-        $db->transStart();
-
         $variantModel = new ProductVariantModel();
+        $transactionModel = new TransactionModel();
+        $detailModel = new TransactionDetailModel();
 
         $totalAmount = 0;
 
@@ -65,35 +67,33 @@ class CheckoutController extends BaseController
             $variant = $variantModel->find($item['variant_id']);
 
             if (!$variant) {
-                $db->transRollback();
                 return redirect()->to('/cart')->with('error', 'Salah satu varian produk tidak ditemukan.');
             }
 
-            if ($variant['stock'] < $item['quantity']) {
-                $db->transRollback();
+            if ((int) $variant['stock'] < (int) $item['quantity']) {
                 return redirect()->to('/cart')->with('error', 'Stok produk ' . $item['name'] . ' ukuran ' . $item['size'] . ' tidak mencukupi.');
             }
 
-            $totalAmount += $item['subtotal'];
+            $totalAmount += (int) $item['subtotal'];
         }
 
-        $transactionModel = new TransactionModel();
-
         $invoiceNumber = 'INV-' . date('YmdHis') . '-' . session()->get('user_id');
+        $midtransOrderId = $invoiceNumber;
+
+        $db->transStart();
 
         $transactionId = $transactionModel->insert([
-            'user_id'          => session()->get('user_id'),
-            'invoice_number'   => $invoiceNumber,
-            'customer_name'    => $customerName,
-            'customer_phone'   => $customerPhone,
-            'shipping_address' => $shippingAddress,
-            'total_amount'     => $totalAmount,
-            'payment_method'   => $paymentMethod,
-            'payment_status'   => 'pending',
-            'order_status'     => 'pending',
+            'user_id'             => session()->get('user_id'),
+            'invoice_number'      => $invoiceNumber,
+            'customer_name'       => $customerName,
+            'customer_phone'      => $customerPhone,
+            'shipping_address'    => $shippingAddress,
+            'total_amount'        => $totalAmount,
+            'payment_method'      => $paymentMethod,
+            'payment_status'      => 'pending',
+            'order_status'        => 'pending',
+            'midtrans_order_id'   => $midtransOrderId,
         ]);
-
-        $detailModel = new TransactionDetailModel();
 
         foreach ($cart as $item) {
             $detailModel->insert([
@@ -110,7 +110,7 @@ class CheckoutController extends BaseController
             $variant = $variantModel->find($item['variant_id']);
 
             $variantModel->update($item['variant_id'], [
-                'stock' => $variant['stock'] - $item['quantity']
+                'stock' => (int) $variant['stock'] - (int) $item['quantity']
             ]);
         }
 
@@ -120,9 +120,60 @@ class CheckoutController extends BaseController
             return redirect()->to('/cart')->with('error', 'Checkout gagal diproses.');
         }
 
-        session()->remove('cart');
+        try {
+            Config::$serverKey    = getenv('MIDTRANS_SERVER_KEY');
+            Config::$isProduction = getenv('MIDTRANS_IS_PRODUCTION') === 'true';
+            Config::$isSanitized  = true;
+            Config::$is3ds        = true;
 
-        return redirect()->to('/checkout/success/' . $transactionId);
+            $itemDetails = [];
+
+            foreach ($cart as $item) {
+                $itemDetails[] = [
+                    'id'       => (string) $item['variant_id'],
+                    'price'    => (int) $item['price'],
+                    'quantity' => (int) $item['quantity'],
+                    'name'     => substr($item['name'] . ' - ' . $item['size'], 0, 50),
+                ];
+            }
+
+            $params = [
+                'transaction_details' => [
+                    'order_id'     => $midtransOrderId,
+                    'gross_amount' => (int) $totalAmount,
+                ],
+                'customer_details' => [
+                    'first_name' => $customerName,
+                    'email'      => session()->get('email'),
+                    'phone'      => $customerPhone,
+                    'shipping_address' => [
+                        'first_name' => $customerName,
+                        'phone'      => $customerPhone,
+                        'address'    => $shippingAddress,
+                    ],
+                ],
+                'item_details' => $itemDetails,
+                'callbacks' => [
+                    'finish'   => base_url('/payment/finish'),
+                    'unfinish' => base_url('/payment/unfinish'),
+                    'error'    => base_url('/payment/error'),
+                ],
+            ];
+
+            $snapToken = Snap::getSnapToken($params);
+
+            $transactionModel->update($transactionId, [
+                'snap_token' => $snapToken,
+            ]);
+
+            session()->remove('cart');
+
+            return redirect()->to('/payment/pay/' . $transactionId);
+
+        } catch (\Throwable $e) {
+            return redirect()->to('/transactions/detail/' . $transactionId)
+                ->with('error', 'Transaksi berhasil dibuat, tetapi gagal membuat token pembayaran Midtrans: ' . $e->getMessage());
+        }
     }
 
     public function success($id)

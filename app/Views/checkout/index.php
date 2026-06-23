@@ -105,19 +105,19 @@
                         <textarea name="shipping_address" rows="5" required placeholder="Masukkan alamat lengkap"></textarea>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group checkout-payment-method">
                         <label>Metode Pembayaran</label>
-                        <input class="input" type="text" value="QRIS OVO" readonly>
-                        <input type="hidden" name="payment_method" value="QRIS OVO">
+                        <input class="input" type="text" value="Midtrans Payment Gateway" readonly>
+                        <input type="hidden" name="payment_method" value="Midtrans">
                     </div>
 
-                    <button class="btn btn-full" type="submit" onclick="return confirm('Proses checkout sekarang?')">
-                        Buat Pesanan
-                    </button>
+                    <div class="checkout-actions">
+                        <button class="btn btn-full" type="submit" onclick="return confirm('Proses checkout sekarang?')">
+                            Lanjut ke Pembayaran
+                        </button>
 
-                    <br><br>
-
-                    <a href="/cart" class="btn btn-outline btn-full">Kembali ke Keranjang</a>
+                        <a href="/cart" class="btn btn-outline btn-full">Kembali ke Keranjang</a>
+                    </div>
                 </form>
             </div>
         </div>

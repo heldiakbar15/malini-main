@@ -14,7 +14,7 @@ class CustomerTransactionController extends BaseController
         }
 
         if (session()->get('role') !== 'customer') {
-            return redirect()->to('/admin/dashboard')->with('error', 'Akses hanya untuk customer.');
+            return redirect()->to('/admin/dashboard')->with('error', 'Halaman ini hanya untuk customer.');
         }
 
         return null;
@@ -30,7 +30,7 @@ class CustomerTransactionController extends BaseController
 
         $transactions = $transactionModel
             ->where('user_id', session()->get('user_id'))
-            ->orderBy('id', 'DESC')
+            ->orderBy('created_at', 'DESC')
             ->findAll();
 
         return view('customer/transactions/index', [
@@ -53,7 +53,8 @@ class CustomerTransactionController extends BaseController
             ->first();
 
         if (!$transaction) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Transaksi tidak ditemukan');
+            return redirect()->to('/transactions')
+                ->with('error', 'Transaksi tidak ditemukan.');
         }
 
         $details = $detailModel

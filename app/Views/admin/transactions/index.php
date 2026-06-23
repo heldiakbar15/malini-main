@@ -7,6 +7,79 @@
 </head>
 <body>
 
+    <?php
+    function formatPaymentMethodAdmin($transaction)
+    {
+        $paymentMethod = $transaction['payment_method'] ?? null;
+        $paymentType   = $transaction['midtrans_payment_type'] ?? null;
+        $bank          = $transaction['midtrans_bank'] ?? null;
+
+        if (!empty($paymentMethod) && $paymentMethod !== 'Midtrans') {
+            return $paymentMethod;
+        }
+
+        if ($paymentType === 'bank_transfer' && !empty($bank)) {
+            return 'VA ' . strtoupper($bank);
+        }
+
+        if ($paymentType === 'gopay') {
+            return 'GoPay';
+        }
+
+        if ($paymentType === 'qris') {
+            return 'QRIS';
+        }
+
+        if ($paymentType === 'shopeepay') {
+            return 'ShopeePay';
+        }
+
+        if ($paymentType === 'credit_card') {
+            return 'Kartu Kredit';
+        }
+
+        if (!empty($paymentType)) {
+            return ucwords(str_replace('_', ' ', $paymentType));
+        }
+
+        return '-';
+    }
+
+    function formatPaymentStatusAdmin($status)
+    {
+        if ($status === 'paid') {
+            return '<strong style="color:green;">Lunas</strong>';
+        }
+
+        if ($status === 'failed') {
+            return '<strong style="color:#b3261e;">Gagal</strong>';
+        }
+
+        return '<strong style="color:#b7791f;">Menunggu</strong>';
+    }
+
+    function formatOrderStatusAdmin($status)
+    {
+        if ($status === 'processing') {
+            return 'Diproses';
+        }
+
+        if ($status === 'shipped') {
+            return 'Dikirim';
+        }
+
+        if ($status === 'completed') {
+            return 'Selesai';
+        }
+
+        if ($status === 'cancelled') {
+            return 'Dibatalkan';
+        }
+
+        return 'Pending';
+    }
+    ?>
+
 <nav class="navbar">
     <div class="container navbar-inner">
         <a href="/admin/dashboard" class="logo">MALINI ADMIN</a>
@@ -83,9 +156,9 @@
                                     <small><?= esc($transaction['user_email']) ?></small>
                                 </td>
                                 <td>Rp <?= number_format($transaction['total_amount'], 0, ',', '.') ?></td>
-                                <td><?= esc($transaction['payment_method']) ?></td>
-                                <td><?= esc($transaction['payment_status']) ?></td>
-                                <td><?= esc($transaction['order_status']) ?></td>
+                                <td><?= esc(formatPaymentMethodAdmin($transaction)) ?></td>
+                                <td><?= formatPaymentStatusAdmin($transaction['payment_status']) ?></td>
+                                <td><?= esc(formatOrderStatusAdmin($transaction['order_status'])) ?></td>
                                 <td><?= esc($transaction['created_at']) ?></td>
                                 <td>
                                     <a class="btn" href="/admin/transactions/detail/<?= esc($transaction['id']) ?>">

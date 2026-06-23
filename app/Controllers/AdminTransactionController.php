@@ -70,38 +70,33 @@ class AdminTransactionController extends BaseController
 
     public function updateStatus($id)
     {
-        if ($redirect = $this->checkAdmin()) {
-            return $redirect;
+        if (!session()->get('logged_in')) {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu.');
         }
 
-        $transactionModel = new TransactionModel();
+        if (session()->get('role') !== 'admin') {
+            return redirect()->to('/dashboard')->with('error', 'Anda tidak memiliki akses.');
+        }
+
+        $transactionModel = new \App\Models\TransactionModel();
 
         $transaction = $transactionModel->find($id);
 
         if (!$transaction) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Transaksi tidak ditemukan');
+            return redirect()->to('/admin/transactions')->with('error', 'Transaksi tidak ditemukan.');
         }
 
-        $paymentStatus = $this->request->getPost('payment_status');
-        $orderStatus   = $this->request->getPost('order_status');
+        $orderStatus = $this->request->getPost('order_status');
 
-        $allowedPaymentStatus = ['pending', 'paid', 'failed'];
-        $allowedOrderStatus   = ['pending', 'processing', 'shipped', 'completed', 'cancelled'];
-
-        if (!in_array($paymentStatus, $allowedPaymentStatus)) {
-            return redirect()->back()->with('error', 'Status pembayaran tidak valid.');
-        }
-
-        if (!in_array($orderStatus, $allowedOrderStatus)) {
-            return redirect()->back()->with('error', 'Status pesanan tidak valid.');
+        if (!$orderStatus) {
+            return redirect()->back()->with('error', 'Status pesanan wajib dipilih.');
         }
 
         $transactionModel->update($id, [
-            'payment_status' => $paymentStatus,
-            'order_status'   => $orderStatus,
+            'order_status' => $orderStatus,
         ]);
 
         return redirect()->to('/admin/transactions/detail/' . $id)
-            ->with('success', 'Status transaksi berhasil diperbarui.');
+            ->with('success', 'Status pesanan berhasil diperbarui.');
     }
 }

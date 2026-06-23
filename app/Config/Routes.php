@@ -47,6 +47,7 @@ $routes->get('/admin/products/edit/(:num)', 'AdminProductController::edit/$1');
 $routes->post('/admin/products/update/(:num)', 'AdminProductController::update/$1');
 $routes->post('/admin/products/delete/(:num)', 'AdminProductController::delete/$1');
 
+// Export
 $routes->get('/admin/reports', 'AdminReportController::index');
 $routes->get('/admin/reports/export-excel', 'AdminReportController::exportExcel');
 $routes->get('/admin/reports/export-pdf', 'AdminReportController::exportPdf');
@@ -54,3 +55,10 @@ $routes->get('/admin/reports/export-pdf', 'AdminReportController::exportPdf');
 // Customer transaksi
 $routes->get('/transactions', 'CustomerTransactionController::index');
 $routes->get('/transactions/detail/(:num)', 'CustomerTransactionController::detail/$1');
+
+// Midtrans Payment
+$routes->get('/payment/pay/(:num)', 'PaymentController::pay/$1');
+$routes->post('/payment/notification', 'PaymentController::notification');
+$routes->get('/payment/finish', 'PaymentController::finish');
+$routes->get('/payment/unfinish', 'PaymentController::unfinish');
+$routes->get('/payment/error', 'PaymentController::error');
