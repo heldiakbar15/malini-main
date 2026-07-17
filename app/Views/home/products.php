@@ -1,8 +1,29 @@
+<?php
+    $currentPage = $pager->getCurrentPage('products');
+    $pageCount = $pager->getPageCount('products');
+    $selectedCategory = (string) ($categoryId ?? '');
+    $searchKeyword = (string) ($search ?? '');
+
+    $pageUrl = static function (int $page) use ($searchKeyword, $selectedCategory): string {
+        $query = ['page_products' => $page];
+
+        if ($searchKeyword !== '') {
+            $query['q'] = $searchKeyword;
+        }
+
+        if ($selectedCategory !== '') {
+            $query['category_id'] = $selectedCategory;
+        }
+
+        return '/produk?' . http_build_query($query);
+    };
+?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Malini Parfum</title>
+    <title>Katalog Produk - Malini Parfum</title>
     <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
@@ -14,7 +35,7 @@
         <div class="nav-menu">
             <a href="/">Beranda</a>
             <a href="/produk">Produk</a>
-            <a href="#tentang">Tentang Kami</a>
+            <a href="/#tentang">Tentang Kami</a>
 
             <?php if (session()->get('logged_in')) : ?>
                 <?php if (session()->get('role') === 'admin') : ?>
@@ -51,88 +72,51 @@
     </div>
 </nav>
 
-<section class="hero">
-    <div class="container hero-content">
-        <div class="hero-copy">
-            <div class="eyebrow">Premium Fragrance</div>
-            <h1>Malini Perfume Collection</h1>
-            <p>
-                Temukan aroma terbaik untuk menemani setiap langkah dan momen spesial Anda.
-                Pilihan parfum pria, wanita, dan unisex tersedia dalam berbagai ukuran.
-            </p>
-            <div class="hero-actions">
-                <a href="/produk" class="btn">Jelajahi Produk</a>
-                <a href="#produk" class="btn btn-ghost">Produk Unggulan</a>
-            </div>
-
-            <div class="hero-points">
-                <div>
-                    <strong>3</strong>
-                    <span>Kategori aroma</span>
-                </div>
-                <div>
-                    <strong>10-50ml</strong>
-                    <span>Varian ukuran</span>
-                </div>
-                <div>
-                    <strong>24/7</strong>
-                    <span>Belanja online</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section class="section section-light">
+<section class="section section-white">
     <div class="container">
-        <div class="eyebrow">Kategori</div>
-        <h2 class="section-title">Kategori Parfum</h2>
-        <div class="line"></div>
-
-        <div class="category-grid">
-            <div class="category-card">
-                <div class="category-icon">★</div>
-                <strong>Pria</strong>
-                <p>Aroma maskulin, segar, dan berkarakter.</p>
+        <div class="catalog-head">
+            <div>
+                <div class="eyebrow">Katalog</div>
+                <h1 class="section-title">Semua Produk</h1>
+                <div class="line"></div>
             </div>
-
-            <div class="category-card">
-                <div class="category-icon">★</div>
-                <strong>Wanita</strong>
-                <p>Pilihan floral, manis, dan elegan untuk harian.</p>
-            </div>
-
-            <div class="category-card">
-                <div class="category-icon">★</div>
-                <strong>Unisex</strong>
-                <p>Aroma fleksibel yang cocok untuk berbagai momen.</p>
-            </div>
+            <a href="/" class="btn btn-outline">Kembali ke Beranda</a>
         </div>
-    </div>
-</section>
 
-<section class="section section-white" id="produk">
-    <div class="container">
-        <div class="eyebrow">Terlaris</div>
-        <h2 class="section-title">Produk Unggulan</h2>
-        <div class="line"></div>
-        <div class="section-head-action">
-            <p>Pilihan produk terbaru dari koleksi Malini Parfum.</p>
-            <a href="/produk" class="btn btn-outline">Lihat Semua Produk</a>
-        </div>
+        <form action="/produk" method="get" class="catalog-filter">
+            <div class="form-group">
+                <label>Cari Produk</label>
+                <input class="input" type="search" name="q" value="<?= esc($searchKeyword) ?>" placeholder="Nama atau deskripsi parfum">
+            </div>
+
+            <div class="form-group">
+                <label>Kategori</label>
+                <select name="category_id">
+                    <option value="">Semua kategori</option>
+                    <?php foreach ($categories as $category) : ?>
+                        <option value="<?= esc($category['id']) ?>" <?= $selectedCategory === (string) $category['id'] ? 'selected' : '' ?>>
+                            <?= esc($category['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="catalog-filter-actions">
+                <button type="submit" class="btn">Terapkan</button>
+                <a href="/produk" class="btn btn-outline">Reset</a>
+            </div>
+        </form>
 
         <?php if (!empty($products)) : ?>
             <div class="product-grid">
                 <?php foreach ($products as $product) : ?>
-                    <?php
-                        $image = !empty($product['image']) ? $product['image'] : 'dior.png';
-                    ?>
+                    <?php $image = !empty($product['image']) ? $product['image'] : 'dior.png'; ?>
 
                     <div class="product-card">
                         <img src="/assets/img/<?= esc($image) ?>" alt="<?= esc($product['name']) ?>">
 
                         <div class="product-body">
-                            <span class="badge">Parfum</span>
+                            <span class="badge"><?= esc($product['category_name'] ?? 'Parfum') ?></span>
 
                             <h3 class="product-title">
                                 <?= esc($product['name']) ?>
@@ -159,44 +143,35 @@
                     </div>
                 <?php endforeach; ?>
             </div>
+
+            <?php if ($pageCount > 1) : ?>
+                <nav class="catalog-pagination" aria-label="Pagination produk">
+                    <?php if ($currentPage > 1) : ?>
+                        <a href="<?= esc($pageUrl($currentPage - 1)) ?>" class="btn btn-outline">Sebelumnya</a>
+                    <?php endif; ?>
+
+                    <div class="pagination-pages">
+                        <?php for ($page = 1; $page <= $pageCount; $page++) : ?>
+                            <a
+                                href="<?= esc($pageUrl($page)) ?>"
+                                class="pagination-link <?= $page === $currentPage ? 'active' : '' ?>"
+                            >
+                                <?= esc($page) ?>
+                            </a>
+                        <?php endfor; ?>
+                    </div>
+
+                    <?php if ($currentPage < $pageCount) : ?>
+                        <a href="<?= esc($pageUrl($currentPage + 1)) ?>" class="btn btn-outline">Berikutnya</a>
+                    <?php endif; ?>
+                </nav>
+            <?php endif; ?>
         <?php else : ?>
             <div class="table-card">
-                <p>Produk belum tersedia.</p>
+                <p class="empty-text">Produk tidak ditemukan. Coba kata kunci atau kategori lain.</p>
+                <a href="/produk" class="btn">Lihat Semua Produk</a>
             </div>
         <?php endif; ?>
-    </div>
-</section>
-
-<section class="section home-about" id="tentang">
-    <div class="container home-about-grid">
-        <div>
-            <div class="eyebrow">Tentang Kami</div>
-            <h2 class="section-title">Malini Parfum</h2>
-            <div class="line"></div>
-
-            <p style="max-width:650px; color:#bfbfbf; line-height:1.8;">
-                Malini Parfum menyediakan berbagai pilihan aroma pria, wanita, dan unisex dengan kualitas terbaik.
-                Kami berkomitmen memberikan produk berkualitas dengan harga terjangkau serta pelayanan yang memuaskan
-                bagi setiap pelanggan.
-            </p>
-        </div>
-
-        <div>
-            <div class="about-feature">
-                <strong>Produk Premium</strong>
-                <p>Koleksi parfum pilihan dengan aroma elegan dan tahan lama.</p>
-            </div>
-
-            <div class="about-feature">
-                <strong>Varian Ukuran</strong>
-                <p>Tersedia ukuran 10 ml, 30 ml, dan 50 ml sesuai kebutuhan pelanggan.</p>
-            </div>
-
-            <div class="about-feature">
-                <strong>Transaksi Mudah</strong>
-                <p>Pelanggan dapat memilih produk, memasukkan ke keranjang, dan melakukan checkout.</p>
-            </div>
-        </div>
     </div>
 </section>
 
@@ -214,14 +189,14 @@
             <div class="eyebrow">Navigasi</div>
             <p><a href="/">Beranda</a></p>
             <p><a href="/produk">Produk</a></p>
-            <p><a href="#tentang">Tentang Kami</a></p>
+            <p><a href="/#tentang">Tentang Kami</a></p>
         </div>
 
         <div>
             <div class="eyebrow">Kategori</div>
-            <p>Parfum Pria</p>
-            <p>Parfum Wanita</p>
-            <p>Unisex</p>
+            <?php foreach ($categories as $category) : ?>
+                <p><a href="/produk?category_id=<?= esc($category['id']) ?>"><?= esc($category['name']) ?></a></p>
+            <?php endforeach; ?>
         </div>
 
         <div>

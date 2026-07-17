@@ -12,7 +12,8 @@ class ProductModel extends Model
         'category_id',
         'name',
         'description',
-        'image'
+        'image',
+        'is_featured',
     ];
     protected $useTimestamps = true;
 }

@@ -79,7 +79,7 @@
             <div class="alert-error"><?= session()->getFlashdata('error') ?></div>
         <?php endif; ?>
 
-        <form action="<?= esc($action) ?>" method="post">
+        <form action="<?= esc($action) ?>" method="post" enctype="multipart/form-data">
             <?= csrf_field() ?>
 
             <div class="admin-form-grid">
@@ -108,9 +108,20 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Nama File Gambar</label>
-                        <input class="input" type="text" name="image" value="<?= esc(old('image', $product['image'] ?? '')) ?>" placeholder="contoh: dior.png">
-                        <small>File gambar diambil dari folder public/assets/img.</small>
+                        <label>Foto Produk</label>
+
+                        <?php if (!empty($product['image'])) : ?>
+                            <div class="product-image-preview">
+                                <img src="/assets/img/<?= esc($product['image']) ?>" alt="<?= esc($product['name'] ?? 'Foto produk') ?>">
+                                <div>
+                                    <strong>Foto saat ini</strong>
+                                    <small><?= esc($product['image']) ?></small>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <input class="input" type="file" name="image_file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                        <small>Upload JPG, PNG, atau WEBP maksimal 2 MB. Jika dikosongkan saat edit, foto lama tetap digunakan.</small>
                     </div>
 
                     <div class="form-group">

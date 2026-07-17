@@ -1,0 +1,24 @@
+Options -Indexes
+
+<FilesMatch "^(\.env|composer\.(json|lock)|spark|phpunit\.dist\.xml|preload\.php)$">
+    Require all denied
+</FilesMatch>
+
+RedirectMatch 403 ^/(app|vendor|writable|tests|\.git)(/.*)?$
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^([\s\S]*)$ index.php/$1 [L,NC,QSA]
+
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    ErrorDocument 404 index.php
+</IfModule>
+
+ServerSignature Off

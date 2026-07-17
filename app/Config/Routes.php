@@ -4,6 +4,7 @@ use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
 $routes->get('/', 'HomeController::index');
+$routes->get('/produk', 'HomeController::products');
 $routes->get('/produk/(:num)', 'HomeController::detail/$1');
 
 $routes->get('/login', 'AuthController::login');
@@ -45,6 +46,7 @@ $routes->get('/admin/products/create', 'AdminProductController::create');
 $routes->post('/admin/products/store', 'AdminProductController::store');
 $routes->get('/admin/products/edit/(:num)', 'AdminProductController::edit/$1');
 $routes->post('/admin/products/update/(:num)', 'AdminProductController::update/$1');
+$routes->post('/admin/products/toggle-featured/(:num)', 'AdminProductController::toggleFeatured/$1');
 $routes->post('/admin/products/delete/(:num)', 'AdminProductController::delete/$1');
 
 // Export

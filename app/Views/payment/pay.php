@@ -133,18 +133,27 @@
 <?php if (($transaction['payment_status'] ?? '') === 'pending') : ?>
 <script>
     const payButton = document.getElementById('pay-button');
+    const fallbackOrderId = <?= json_encode($transaction['midtrans_order_id'] ?? $transaction['invoice_number']) ?>;
+
+    function paymentReturnUrl(path, result) {
+        const params = new URLSearchParams({
+            order_id: result && result.order_id ? result.order_id : fallbackOrderId,
+        });
+
+        return path + '?' + params.toString();
+    }
 
     if (payButton) {
         payButton.addEventListener('click', function () {
             snap.pay('<?= esc($transaction['snap_token']) ?>', {
                 onSuccess: function(result) {
-                    window.location.href = '/payment/finish';
+                    window.location.href = paymentReturnUrl('/payment/finish', result);
                 },
                 onPending: function(result) {
-                    window.location.href = '/payment/unfinish';
+                    window.location.href = paymentReturnUrl('/payment/unfinish', result);
                 },
                 onError: function(result) {
-                    window.location.href = '/payment/error';
+                    window.location.href = paymentReturnUrl('/payment/error', result);
                 },
                 onClose: function() {
                     alert('Anda menutup popup pembayaran sebelum menyelesaikan pembayaran.');

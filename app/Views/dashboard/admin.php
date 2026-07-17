@@ -35,8 +35,8 @@
                         <?php if ($totalAdminNotifications > 0) : ?>
                             <div class="notification-summary">
                                 <a href="/admin/transactions" class="notification-stat">
-                                    <strong><?= esc($pendingTransactionCount) ?></strong>
-                                    <span>Transaksi perlu dicek</span>
+                                    <strong><?= esc($actionableOrderCount) ?></strong>
+                                    <span>Pesanan perlu dikirim</span>
                                 </a>
                                 <div class="notification-stat danger">
                                     <strong><?= count($stockOutProducts) ?></strong>
@@ -48,18 +48,21 @@
                                 </div>
                             </div>
 
-                            <?php if (!empty($latestPendingTransactions)) : ?>
+                            <?php if (!empty($latestActionableOrders)) : ?>
                                 <div class="notification-list">
-                                    <?php foreach ($latestPendingTransactions as $transaction) : ?>
+                                    <?php foreach ($latestActionableOrders as $transaction) : ?>
                                         <a href="/admin/transactions/detail/<?= esc($transaction['id']) ?>" class="notification-item">
                                             <span>
                                                 <strong><?= esc($transaction['invoice_number']) ?></strong>
                                                 <?= esc($transaction['customer_name']) ?>
+                                                <small>Sudah lunas, siapkan barang</small>
                                             </span>
                                             <small>Rp <?= number_format($transaction['total_amount'], 0, ',', '.') ?></small>
                                         </a>
                                     <?php endforeach; ?>
                                 </div>
+                            <?php elseif ($totalAdminNotifications > 0) : ?>
+                                <p class="notification-empty">Tidak ada pesanan lunas yang menunggu pengiriman.</p>
                             <?php endif; ?>
 
                             <a href="/admin/transactions" class="notification-action">Lihat semua transaksi</a>
@@ -151,39 +154,78 @@
             <div class="table-card">
                 <div class="section-mini-title chart-title-row">
                     <div>
-                        <h3>Grafik Penjualan</h3>
-                        <p>Progres penjualan berdasarkan transaksi paid dalam 4 bulan terakhir.</p>
+                        <h3>Grafik Penjualan Produk</h3>
+                        <p>Urutan berdasarkan produk paling banyak terjual. Tinggi grafik membandingkan jumlah terjual dengan stok produk.</p>
+                    </div>
+
+                    <form action="/admin/dashboard" method="get" class="chart-month-filter">
+                        <label for="sales_month">Bulan</label>
+                        <div>
+                            <input class="input" type="month" id="sales_month" name="sales_month" value="<?= esc($selectedSalesMonth) ?>">
+                            <button type="submit" class="btn">Terapkan</button>
+                            <a href="/admin/dashboard" class="btn btn-outline">Reset</a>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="chart-summary-row">
+                    <div class="chart-total">
+                        <span>Total bulan ini</span>
+                        <strong>Rp <?= number_format($salesChartTotal, 0, ',', '.') ?></strong>
                     </div>
                     <div class="chart-total">
-                        <span>Total periode</span>
-                        <strong>Rp <?= number_format(array_sum(array_column($salesChart, 'total')), 0, ',', '.') ?></strong>
+                        <span>Total item terjual</span>
+                        <strong><?= esc($salesChartQuantity) ?> item</strong>
                     </div>
                 </div>
 
-                <div class="sales-chart">
-                    <?php foreach ($salesChart as $sale) : ?>
-                        <?php
-                            $height = $sale['progress'];
-                            $barHeight = $height > 0 && $height < 8 ? 8 : $height;
-                            $growthClass = $sale['growth'] >= 0 ? 'up' : 'down';
-                            $growthPrefix = $sale['growth'] > 0 ? '+' : '';
-                        ?>
+                <?php if (!empty($salesChart)) : ?>
+                    <div class="sales-chart product-sales-chart">
+                        <?php foreach ($salesChart as $sale) : ?>
+                            <?php
+                                $height = $sale['progress'];
+                                $barHeight = $height > 0 && $height < 8 ? 8 : $height;
+                            ?>
 
-                        <div class="sales-bar-item">
-                            <div class="sales-progress-info">
-                                <strong><?= esc($height) ?>%</strong>
-                                <span class="growth-badge <?= esc($growthClass) ?>">
-                                    <?= esc($growthPrefix . $sale['growth']) ?>%
-                                </span>
+                            <div class="sales-bar-item">
+                                <div class="sales-progress-info">
+                                    <strong><?= esc($sale['progress']) ?>%</strong>
+                                    <span class="growth-badge up"><?= esc($sale['quantity']) ?> item</span>
+                                </div>
+                                <div class="sales-bar-wrapper">
+                                    <div class="sales-bar" style="height: <?= esc($barHeight) ?>%;"></div>
+                                </div>
+                                <small><?= esc($sale['label']) ?></small>
+                                <strong class="sales-value"><?= esc($sale['quantity']) ?> / <?= esc($sale['stock']) ?> stok</strong>
                             </div>
-                            <div class="sales-bar-wrapper">
-                                <div class="sales-bar" style="height: <?= esc($barHeight) ?>%;"></div>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <?php if ($chartPageCount > 1) : ?>
+                        <nav class="catalog-pagination chart-pagination" aria-label="Pagination grafik produk">
+                            <?php if ($chartPage > 1) : ?>
+                                <a href="/admin/dashboard?sales_month=<?= esc($selectedSalesMonth) ?>&chart_page=<?= esc($chartPage - 1) ?>" class="btn btn-outline">Sebelumnya</a>
+                            <?php endif; ?>
+
+                            <div class="pagination-pages">
+                                <?php for ($page = 1; $page <= $chartPageCount; $page++) : ?>
+                                    <a
+                                        href="/admin/dashboard?sales_month=<?= esc($selectedSalesMonth) ?>&chart_page=<?= esc($page) ?>"
+                                        class="pagination-link <?= $page === $chartPage ? 'active' : '' ?>"
+                                    >
+                                        <?= esc($page) ?>
+                                    </a>
+                                <?php endfor; ?>
                             </div>
-                            <small><?= esc($sale['label']) ?></small>
-                            <strong class="sales-value">Rp <?= number_format($sale['total'], 0, ',', '.') ?></strong>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+
+                            <?php if ($chartPage < $chartPageCount) : ?>
+                                <a href="/admin/dashboard?sales_month=<?= esc($selectedSalesMonth) ?>&chart_page=<?= esc($chartPage + 1) ?>" class="btn btn-outline">Berikutnya</a>
+                            <?php endif; ?>
+                        </nav>
+                    <?php endif; ?>
+                <?php else : ?>
+                    <p class="empty-text">Belum ada produk untuk ditampilkan pada grafik.</p>
+                <?php endif; ?>
             </div>
 
             <div class="table-card">

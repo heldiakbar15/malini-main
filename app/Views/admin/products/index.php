@@ -1,3 +1,24 @@
+<?php
+    $currentPage = $pager->getCurrentPage('admin_products');
+    $pageCount = $pager->getPageCount('admin_products');
+    $selectedCategory = (string) ($categoryId ?? '');
+    $searchKeyword = (string) ($search ?? '');
+
+    $pageUrl = static function (int $page) use ($searchKeyword, $selectedCategory): string {
+        $query = ['page_admin_products' => $page];
+
+        if ($searchKeyword !== '') {
+            $query['q'] = $searchKeyword;
+        }
+
+        if ($selectedCategory !== '') {
+            $query['category_id'] = $selectedCategory;
+        }
+
+        return '/admin/products?' . http_build_query($query);
+    };
+?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -61,6 +82,30 @@
             <div class="alert-error"><?= session()->getFlashdata('error') ?></div>
         <?php endif; ?>
 
+        <form action="/admin/products" method="get" class="catalog-filter admin-product-filter">
+            <div class="form-group">
+                <label>Cari Produk</label>
+                <input class="input" type="search" name="q" value="<?= esc($searchKeyword) ?>" placeholder="Nama atau deskripsi produk">
+            </div>
+
+            <div class="form-group">
+                <label>Kategori</label>
+                <select name="category_id">
+                    <option value="">Semua kategori</option>
+                    <?php foreach ($categories as $category) : ?>
+                        <option value="<?= esc($category['id']) ?>" <?= $selectedCategory === (string) $category['id'] ? 'selected' : '' ?>>
+                            <?= esc($category['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="catalog-filter-actions">
+                <button type="submit" class="btn">Terapkan</button>
+                <a href="/admin/products" class="btn btn-outline">Reset</a>
+            </div>
+        </form>
+
         <div class="table-card">
             <?php if (!empty($products)) : ?>
                 <table class="table">
@@ -99,6 +144,17 @@
                                 <td><?= esc($product['total_stock']) ?></td>
                                 <td>
                                     <div class="table-actions">
+                                        <form action="/admin/products/toggle-featured/<?= esc($product['id']) ?>" method="post">
+                                            <?= csrf_field() ?>
+                                            <button
+                                                type="submit"
+                                                class="featured-button <?= ((int) ($product['is_featured'] ?? 0) === 1) ? 'active' : '' ?>"
+                                                title="<?= ((int) ($product['is_featured'] ?? 0) === 1) ? 'Hapus dari Produk Unggulan' : 'Jadikan Produk Unggulan' ?>"
+                                                aria-label="<?= ((int) ($product['is_featured'] ?? 0) === 1) ? 'Hapus dari Produk Unggulan' : 'Jadikan Produk Unggulan' ?>"
+                                            >
+                                                ★
+                                            </button>
+                                        </form>
                                         <a href="/admin/products/edit/<?= esc($product['id']) ?>" class="btn btn-outline">Edit</a>
                                         <form action="/admin/products/delete/<?= esc($product['id']) ?>" method="post" onsubmit="return confirm('Hapus produk ini beserta variannya?');">
                                             <?= csrf_field() ?>
@@ -110,8 +166,32 @@
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+
+                <?php if ($pageCount > 1) : ?>
+                    <nav class="catalog-pagination" aria-label="Pagination produk admin">
+                        <?php if ($currentPage > 1) : ?>
+                            <a href="<?= esc($pageUrl($currentPage - 1)) ?>" class="btn btn-outline">Sebelumnya</a>
+                        <?php endif; ?>
+
+                        <div class="pagination-pages">
+                            <?php for ($page = 1; $page <= $pageCount; $page++) : ?>
+                                <a
+                                    href="<?= esc($pageUrl($page)) ?>"
+                                    class="pagination-link <?= $page === $currentPage ? 'active' : '' ?>"
+                                >
+                                    <?= esc($page) ?>
+                                </a>
+                            <?php endfor; ?>
+                        </div>
+
+                        <?php if ($currentPage < $pageCount) : ?>
+                            <a href="<?= esc($pageUrl($currentPage + 1)) ?>" class="btn btn-outline">Berikutnya</a>
+                        <?php endif; ?>
+                    </nav>
+                <?php endif; ?>
             <?php else : ?>
-                <p class="empty-text">Belum ada produk.</p>
+                <p class="empty-text">Produk tidak ditemukan. Coba kata kunci atau kategori lain.</p>
+                <a href="/admin/products" class="btn">Reset Filter</a>
             <?php endif; ?>
         </div>
     </div>

@@ -89,61 +89,94 @@ class DashboardController extends BaseController
 
         $totalRevenue = $revenueRow['total_revenue'] ?? 0;
 
-        // Grafik penjualan 4 bulan terakhir
-        $startMonth = date('Y-m-01', strtotime('-3 months'));
+        // Grafik penjualan produk dalam satu bulan, default bulan berjalan.
+        $selectedSalesMonth = trim((string) $this->request->getGet('sales_month'));
 
-        $salesData = $db->table('transactions')
-            ->select("DATE_FORMAT(created_at, '%Y-%m') as month, SUM(total_amount) as total", false)
-            ->where('payment_status', 'paid')
-            ->where('created_at >=', $startMonth)
-            ->groupBy("DATE_FORMAT(created_at, '%Y-%m')")
-            ->orderBy('month', 'ASC')
+        if (!preg_match('/^\d{4}-\d{2}$/', $selectedSalesMonth) || strtotime($selectedSalesMonth . '-01') === false) {
+            $selectedSalesMonth = date('Y-m');
+        }
+
+        $salesMonthStart = $selectedSalesMonth . '-01 00:00:00';
+        $salesMonthEnd = date('Y-m-01 00:00:00', strtotime($selectedSalesMonth . '-01 +1 month'));
+        $selectedSalesMonthLabel = date('F Y', strtotime($selectedSalesMonth . '-01'));
+        $chartPerPage = 4;
+        $chartPage = max(1, (int) $this->request->getGet('chart_page'));
+
+        $chartProducts = $db->table('products')
+            ->select('products.id, products.name, COALESCE(SUM(product_variants.stock), 0) as current_stock')
+            ->join('product_variants', 'product_variants.product_id = products.id', 'left')
+            ->groupBy('products.id')
+            ->groupBy('products.name')
+            ->orderBy('products.name', 'ASC')
             ->get()
             ->getResultArray();
 
+        $productIds = array_column($chartProducts, 'id');
+        $salesByProduct = [];
+
+        if (!empty($productIds)) {
+            $salesData = $db->table('transaction_details')
+                ->select('transaction_details.product_id, SUM(transaction_details.quantity) as quantity, SUM(transaction_details.subtotal) as total')
+                ->join('transactions', 'transactions.id = transaction_details.transaction_id')
+                ->where('transactions.payment_status', 'paid')
+                ->where('transactions.created_at >=', $salesMonthStart)
+                ->where('transactions.created_at <', $salesMonthEnd)
+                ->whereIn('transaction_details.product_id', $productIds)
+                ->groupBy('transaction_details.product_id')
+                ->get()
+                ->getResultArray();
+
+            foreach ($salesData as $row) {
+                $salesByProduct[(int) $row['product_id']] = [
+                    'quantity' => (int) $row['quantity'],
+                    'total' => (int) $row['total'],
+                ];
+            }
+        }
+
+        $salesSummaryRow = $db->table('transaction_details')
+            ->select('COALESCE(SUM(transaction_details.quantity), 0) as quantity, COALESCE(SUM(transaction_details.subtotal), 0) as total')
+            ->join('transactions', 'transactions.id = transaction_details.transaction_id')
+            ->where('transactions.payment_status', 'paid')
+            ->where('transactions.created_at >=', $salesMonthStart)
+            ->where('transactions.created_at <', $salesMonthEnd)
+            ->get()
+            ->getRowArray();
+
         $salesChart = [];
 
-        for ($i = 3; $i >= 0; $i--) {
-            $monthKey = date('Y-m', strtotime("-$i months"));
-            $monthLabel = date('M Y', strtotime("-$i months"));
+        foreach ($chartProducts as $product) {
+            $productSales = $salesByProduct[(int) $product['id']] ?? ['quantity' => 0, 'total' => 0];
+            $stockReference = (int) $product['current_stock'] + $productSales['quantity'];
+            $progress = $stockReference > 0
+                ? min(100, (int) round(($productSales['quantity'] / $stockReference) * 100))
+                : 0;
 
-            $salesChart[$monthKey] = [
-                'label' => $monthLabel,
-                'total' => 0,
-                'progress' => 0,
-                'growth' => 0,
+            $salesChart[] = [
+                'label' => $product['name'],
+                'quantity' => $productSales['quantity'],
+                'total' => $productSales['total'],
+                'stock' => $stockReference,
+                'progress' => $progress,
             ];
         }
 
-        foreach ($salesData as $row) {
-            if (isset($salesChart[$row['month']])) {
-                $salesChart[$row['month']]['total'] = (int) $row['total'];
+        $salesChartTotal = (int) ($salesSummaryRow['total'] ?? 0);
+        $salesChartQuantity = (int) ($salesSummaryRow['quantity'] ?? 0);
+
+        usort($salesChart, static function (array $first, array $second): int {
+            if ($first['quantity'] === $second['quantity']) {
+                return strcmp($first['label'], $second['label']);
             }
-        }
 
-        $salesChart = array_values($salesChart);
+            return $second['quantity'] <=> $first['quantity'];
+        });
 
-        $maxSales = 0;
-
-        foreach ($salesChart as $sale) {
-            if ($sale['total'] > $maxSales) {
-                $maxSales = $sale['total'];
-            }
-        }
-
-        foreach ($salesChart as $index => $sale) {
-            $salesChart[$index]['progress'] = $maxSales > 0
-                ? (int) round(($sale['total'] / $maxSales) * 100)
-                : 0;
-
-            $previousTotal = $index > 0 ? $salesChart[$index - 1]['total'] : 0;
-
-            if ($previousTotal > 0) {
-                $salesChart[$index]['growth'] = (int) round((($sale['total'] - $previousTotal) / $previousTotal) * 100);
-            } elseif ($sale['total'] > 0) {
-                $salesChart[$index]['growth'] = 100;
-            }
-        }
+        $chartProductCount = count($salesChart);
+        $chartPageCount = max(1, (int) ceil($chartProductCount / $chartPerPage));
+        $chartPage = min($chartPage, $chartPageCount);
+        $chartOffset = ($chartPage - 1) * $chartPerPage;
+        $salesChart = array_slice($salesChart, $chartOffset, $chartPerPage);
 
         // Produk stok habis
         $stockOutProducts = $db->table('product_variants')
@@ -164,25 +197,21 @@ class DashboardController extends BaseController
             ->get()
             ->getResultArray();
 
-        $pendingTransactionCount = $db->table('transactions')
-            ->groupStart()
-                ->where('payment_status', 'pending')
-                ->orWhere('order_status', 'pending')
-            ->groupEnd()
+        $actionableOrderCount = $db->table('transactions')
+            ->where('payment_status', 'paid')
+            ->whereIn('order_status', ['pending', 'processing'])
             ->countAllResults();
 
-        $latestPendingTransactions = $db->table('transactions')
-            ->select('id, invoice_number, customer_name, total_amount, payment_status, order_status, created_at')
-            ->groupStart()
-                ->where('payment_status', 'pending')
-                ->orWhere('order_status', 'pending')
-            ->groupEnd()
-            ->orderBy('created_at', 'DESC')
+        $latestActionableOrders = $db->table('transactions')
+            ->select('id, invoice_number, customer_name, total_amount, payment_status, order_status, paid_at, created_at')
+            ->where('payment_status', 'paid')
+            ->whereIn('order_status', ['pending', 'processing'])
+            ->orderBy('COALESCE(paid_at, created_at)', 'DESC', false)
             ->limit(4)
             ->get()
             ->getResultArray();
 
-        $totalAdminNotifications = $pendingTransactionCount
+        $totalAdminNotifications = $actionableOrderCount
             + count($stockOutProducts)
             + count($lowStockProducts);
 
@@ -192,10 +221,17 @@ class DashboardController extends BaseController
             'totalTransactions' => $totalTransactions,
             'totalRevenue'      => $totalRevenue,
             'salesChart'        => $salesChart,
+            'salesChartTotal'   => $salesChartTotal,
+            'salesChartQuantity' => $salesChartQuantity,
+            'selectedSalesMonth' => $selectedSalesMonth,
+            'selectedSalesMonthLabel' => $selectedSalesMonthLabel,
+            'chartPage' => $chartPage,
+            'chartPageCount' => $chartPageCount,
+            'chartProductCount' => $chartProductCount,
             'stockOutProducts'  => $stockOutProducts,
             'lowStockProducts'  => $lowStockProducts,
-            'pendingTransactionCount' => $pendingTransactionCount,
-            'latestPendingTransactions' => $latestPendingTransactions,
+            'actionableOrderCount' => $actionableOrderCount,
+            'latestActionableOrders' => $latestActionableOrders,
             'totalAdminNotifications' => $totalAdminNotifications,
         ]);
     }
